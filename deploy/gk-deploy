@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-. ./gk-functions
-
 PROG="$(basename "${0}")"
 TOPOLOGY='topology.json'
 LOG_FILE=''
@@ -25,8 +23,6 @@ GLUSTER=0
 KUBE_TEMPLATES_DEFAULT="./kube-templates"
 OCP_TEMPLATES_DEFAULT="./ocp-templates"
 TEMPLATES=""
-REGISTRY_DEFAULT="docker-registry=default"
-REG_NAMESPACE_DEFAULT="default"
 NAMESPACE=""
 WAIT=300
 ABORT=0
@@ -35,9 +31,8 @@ SKIP_PREREQ=0
 LOAD=0
 
 usage() {
-  echo -e "USAGE: ${PROG} [-ghvy] [-c CLI] [-t <TEMPLATES>] [-n NAMESPACE] [-w <SECONDS>]
-        [--load] [-l <LOG_FILE>]
-        [-r [<SELECTOR>]] [--regname REG_NAMESPACE] [<TOPOLOGY>]\n"
+  echo -e "USAGE: ${PROG} [-ghv] [-c CLI] [-t <TEMPLATES>] [-n NAMESPACE] [-w <SECONDS>] [--load]
+       [-l <LOG_FILE>] [<TOPOLOGY>]\n"
 }
 
 help_exit() {
@@ -69,8 +64,8 @@ Options:
                 * For OpenShift: '${OCP_TEMPLATES_DEFAULT}'.
 
   -n NAMESPACE, --namespace NAMESPACE
-              The namespace to use for creating resources. Default is to use
-              the current namespace.
+              The namespace to use for creating resources.
+              Defaults is '${NAMESPACE}'.
 
   -w SECONDS, --wait SECONDS
               Wait SECONDS seconds for pods to become ready. Default is '${WAIT}'.
@@ -86,17 +81,6 @@ Options:
   -l LOG_FILE, --log-file LOG_FILE
               Save all output to the specified file.
 
-  -r, --registry [SELECTOR]
-              [OpenShift only] Create a GlusterFS volume and use it as the
-              default storage volume for an integrated docker registry. An
-              optional SELECTOR label may be specified to discover the
-              registry pods. Default is 'docker-registry=default'.
-
-  --regname REG_NAMESPACE
-              [OpenShift only] The namespace or project in which the integrated
-              docker registry pods are running. This option has no effect
-              without the --registry flag. Default is '${REG_NAMESPACE_DEFAULT}'.
-
   --abort     Abort a deployment. WARNING: Deletes all related resources.
 
   -h, --help  Output this help message.
@@ -107,6 +91,43 @@ Options:
   exit 0
 }
 
+output() {
+  opts="-e"
+  if [[ "${1}" == "-n" ]]; then
+    opts+="n"
+    shift
+  fi
+  out="${@}"
+  echo "$opts" "${out}"
+  if [[ "x${LOG_FILE}" != "x" ]]; then
+    if [[ "${out}" == "\033["K* ]]; then
+      out="${out:6}"
+    fi
+    if [[ "${out}" == "\033["*A ]]; then
+      out="---"
+    fi
+    echo $opts "${out}" >> "${LOG_FILE}"
+  fi
+}
+
+debug() {
+  if [[ ${VERBOSE} -eq 1 ]]; then
+    output "${@}"
+  fi
+}
+
+eval_output() {
+  cmd="${1}"
+  while read line; do
+    if [[ "${line}" == return\ [0-9]* ]]; then
+      eval ${line}
+    fi
+    output ${line}
+  done < <(
+    eval ${cmd}
+    echo "return $?"
+  )
+}
 abort() {
   ${CLI} delete svc heketi
   ${CLI} delete sa heketi-service-account
@@ -131,6 +152,25 @@ abort() {
     fi
   fi
   exit 1
+}
+
+assign() {
+  key="${1}"
+  assign=`expr index ${key} '='
+  `
+  if [[ $assign -gt 0 ]]; then
+    echo "${key:assign}"
+    return 0
+  elif [[ $assign -eq 0 ]] &&
+       [[ "x${2}" != "x" ]]; then
+    echo "${2}"
+    return 2
+  else
+    output "Required parameter for '-${key}' not specified.\n"
+    usage
+    exit 1
+  fi
+  keypos=$keylen
 }
 
 check_pods() {
@@ -213,16 +253,6 @@ while [[ $# -ge 1 ]]; do
         ;;
         l*|-log-file*)
         LOG_FILE=$(assign "${key:${keypos}}" "${2}")
-        if [[ $? -eq 2 ]]; then shift; fi
-        keypos=$keylen
-        ;;
-        r*|-registry*)
-        REGISTRY=$(assign "${key:${keypos}}" "${2}" "${REGISTRY_DEFAULT}")
-        if [[ $? -eq 2 ]]; then shift; fi
-        keypos=$keylen
-        ;;
-        -regname*)
-        REG_NAMESPACE=$(assign "${key:${keypos}}" "${2}")
         if [[ $? -eq 2 ]]; then shift; fi
         keypos=$keylen
         ;;
