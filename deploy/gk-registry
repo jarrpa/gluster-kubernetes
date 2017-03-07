@@ -1,0 +1,251 @@
+#!/bin/bash
+# Copyright (c) 2016 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+. ./gk-functions
+
+PROG="$(basename "${0}")"
+LOG_FILE=''
+VERBOSE=0
+CLI_DEFAULT='oc'
+TEMPLATES_DEFAULT="./ocp-templates"
+REGISTRY_DEFAULT="docker-registry=default"
+SIZE_DEFAULT=5
+NAMESPACE_DEFAULT="default"
+
+usage() {
+  echo -e "USAGE: ${PROG} [-g <GID>] [-r <REGISTRY>] [-s SIZE] [-n NAMESPACE] [-c CLI]
+        <HEKETI_URL> <GLUSTER_ENDPOINTS>\n"
+}
+
+help_exit() {
+  usage
+  echo "This is a utility script for creating and using a GlusterFS volume as storage for
+an integrated OpenShift registry.
+
+Arguments:
+  HEKETI_URL  A URL to the heketi server that will be used to create the
+              GlusterFS volume.
+
+  GLUSTER_ENDPOINTS
+              The Endpoints resource in OpenShift that points to the Gluster
+              nodes.
+
+Options:
+  -g, --gid GID
+              A GID that should have access to write to the GlusterFS volume.
+              This GID typically corresponds to the fsGroup that is assigned to
+              the pods of an integrated registry. Default is to try and
+              discover the GID from the registry resource.
+
+  -r, --registry REGISTRY
+              An identifier for the registry. May be a Pod, a DeploymentConfig,
+              or a label selector. If specifying a resource, make sure to
+              include its type at the beginning (e.g. 'po/' for a Pod). This is
+              only used to discover the registry GID, and is ignored if the
+              --gid flag is provided. Default is '${REGISTRY_DEFAULT}'.
+
+  -s, --size SIZE
+              The size of the GlusterFS volume to be created, in gigabytes.
+              Default is '${SIZE_DEFAULT}'.
+
+  -n NAMESPACE, --namespace NAMESPACE
+              The namespace to use for creating resources. Default is to use
+              the current namespace, or '${NAMESPACE_DEFAULT}' if one is not found.
+
+  -c CLI, --cli CLI
+              Specify the location of the OpenShift CLI. Default is '${CLI_DEFAULT}'.
+
+  -t TEMPLATES, --templates_dir TEMPLATES
+              Location of directory containing the templates for the
+              various resources. Default is'${TEMPLATES_DEFAULT}'.
+
+  -l LOG_FILE, --log-file LOG_FILE
+              Save all output to the specified file.
+
+  -h, --help  Output this help message.
+
+  -v, --verbose
+              Verbose output
+"
+  exit 0
+}
+
+while [[ $# -ge 1 ]]; do
+  key="${1}"
+
+  case $key in
+    -*)
+    keylen=${#key}
+    keypos=1
+    while [[ $keypos -lt $keylen ]]; do
+      case ${key:${keypos}} in
+        g*|-gid*)
+        GID=$(assign "${key:${keypos}}" "${2}")
+        if [[ $? -eq 2 ]]; then shift; fi
+        keypos=$keylen
+        ;;
+        r*|-registry*)
+        REGISTRY=$(assign "${key:${keypos}}" "${2}")
+        if [[ $? -eq 2 ]]; then shift; fi
+        keypos=$keylen
+        ;;
+        s*|-size*)
+        SIZE=$(assign "${key:${keypos}}" "${2}")
+        if [[ $? -eq 2 ]]; then shift; fi
+        keypos=$keylen
+        ;;
+        n*|-namespace*)
+        NAMESPACE=$(assign "${key:${keypos}}" "${2}")
+        if [[ $? -eq 2 ]]; then shift; fi
+        keypos=$keylen
+        ;;
+        c*|-cli*)
+        CLI=$(assign "${key:${keypos}}" "${2}")
+        if [[ $? -eq 2 ]]; then shift; fi
+        keypos=$keylen
+        ;;
+        t*|-templates_dir*)
+        TEMPLATES=$(assign "${key:${keypos}}" "${2}")
+        if [[ $? -eq 2 ]]; then shift; fi
+        keypos=$keylen
+        ;;
+        l*|-log-file*)
+        LOG_FILE=$(assign "${key:${keypos}}" "${2}")
+        if [[ $? -eq 2 ]]; then shift; fi
+        keypos=$keylen
+        ;;
+        h*|-help)
+        help_exit
+        ;;
+        v*|-verbose)
+        VERBOSE=1
+        if [[ "$key" == "--verbose" ]]; then keypos=$keylen; fi
+        ;;
+        *)
+        output "Unknown option '${key:${keypos}}'.\n"
+        usage
+        exit 1
+        ;;
+      esac
+      ((keypos++))
+    done
+    ;;
+    *)
+    if [[ "x${HEKETI_URL}" == "x" ]]; then
+      HEKETI_URL="${key}"
+    elif [[ "x${GLUSTER_ENDPOINTS}" == "x" ]]; then
+      GLUSTER_ENDPOINTS="${key}"
+    else
+      output "ERROR: Unknown parameter '${key}'."
+      exit 1
+    fi
+    ;;
+  esac
+  shift
+done
+
+if [[ "x${HEKETI_URL}" == "x" ]]; then
+ output "ERROR: heketi service URL nor specified."
+ exit 1
+fi
+
+if [[ "x${GLUSTER_ENDPOINTS}" == "x" ]]; then
+  output "ERROR: Gluster endpoints resource not specified."
+  exit 1
+fi
+
+if [[ "x${REGISTRY}" == "x" ]]; then
+  REGISTRY_PODS="po --selector\"${REGISTRY_DEFAULT}\""
+elif [[ "${REGISTRY}" == dc/* ]] || [[ "${REGISTRY}" == dc * ]] ||
+     [[ "${REGISTRY}" == deploymentconfig/* ]] ||
+     [[ "${REGISTRY}" == deploymentconfig * ]]; then
+  selectors=`${CLI} get ${REGISTRY} -o go-template --template='{{range $key, $value := .spec.selector}}{{$key}}={{$value}} {{end}}'`
+  REGISTRY_PODS="po"
+  for selector in ${selectors}; do
+    if [[ "x${selector}" != "x" ]]; then
+      REGISTRY_PODS="${REGISTRY_PODS} --selector\"${selector}\""
+    fi
+  done
+elif [[ "${REGISTRY}" == po/* ]] || [[ "${REGISTRY}" == po * ]] ||
+     [[ "${REGISTRY}" == pod/* ]] ||
+     [[ "${REGISTRY}" == pod * ]]; then
+  REGISTRY_PODS="${REGISTRY}"
+else
+  REGISTRY_PODS="po"
+  for selector in ${REGISTRY}; do
+    if [[ "x${selector}" != "x" ]]; then
+      REGISTRY_PODS="${REGISTRY_PODS} --selector\"${selector}\""
+    fi
+  done
+fi
+
+if [[ "x${SIZE}" == "x" ]]; then
+  SIZE=${SIZE_DEFAULT}
+fi
+
+if [[ "x${CLI}" == "x" ]]; then
+  CLI="oc"
+fi
+
+if [[ "x${TEMPLATES}" == "x" ]]; then
+  TEMPLATES="${TEMPLATES_DEFAULT}"
+fi
+
+if [[ "x${NAMESPACE}" != "x" ]]; then
+  NAMESPACE=$(${CLI} config get-contexts | awk '/^\*/ {print $5}')
+  if [[ "x${NAMESPACE}" != "x" ]]; then
+    NAMESPACE="${NAMESPACE_DEFAULT}"
+  fi
+fi
+
+${CLI} get namespaces ${NAMESPACE} 2>/dev/null
+if [[ ${?} -eq 0 ]]; then
+  output "Using namespace \"${NAMESPACE}\"."
+  CLI="${CLI} -n ${NAMESPACE}"
+else
+  output "ERROR: Namespace '${NAMESPACE}' not found."
+  exit 1
+fi
+
+if [[ "x${GID}" == "x" ]]; then
+  GID=`${CLI} get ${REGISTRY_PODS} -o go-template --template='{{printf "%.0f" ((index .items 0).spec.securityContext.fsGroup)}}'`
+  if [[ $? -ne 0 ]]; then
+    output "Unable to determine pod GID."
+    exit 1
+  fi
+fi
+
+heketi-cli -s ${HEKETI_URL} volume create --size=${SIZE} --name=gluster-registry-volume --persistent-volume --persistent-volume-endpoint=${GLUSTER_ENDPOINTS} --gid ${GID} > gluster-pv.json
+sed -i 's/"glusterfs-.*"/"gluster-registry-volume"/' gluster-pv.json
+${CLI} create -f gluster-pv.json
+rm gluster-pv.json
+${CLI} label pv/gluster-registry-volume gluster=registry-volume
+${CLI} create -f "${TEMPLATES}/gluster-registry-pvc.yaml"
+
+echo "At this point you may choose to perform a data migration from your current
+registry storage volume to the new 'gluster-registry-volume' volume.
+Additionally, it is recommended that you turn off access to your registry
+storage, for example by running:
+
+oc scale dc/docker-registry --replicas=0
+
+if your registry is running as a DeploymentConfig. This is to avoid data
+corruption during the volume migration.
+"
+read -rp "Press ENTER to continue."
+
+oc volume dc/docker-registry --add --name=registry-storage -t pvc --claim-name=gluster-registry-claim --overwrite
+
