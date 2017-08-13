@@ -10,3 +10,4 @@ fi
 
 # shellcheck disable=SC2094
 vagrant ssh-config > ssh-config
+paplay glass.ogg

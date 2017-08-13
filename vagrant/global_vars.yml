@@ -53,7 +53,7 @@ install_pkgs:
 # * custom_host_aliases: If the custom_repos or registry refer to hostnames
 #   that cannot be resolved normally a custom_host_aliases variable can be
 #   used to add specific entries to /etc/hosts.
-#custom_registry: 192.168.10.1:5000
+custom_registry: 192.168.121.1:5000
 #custom_registry_insecure: false
 #custom_registry_add: false
 #custom_registry_gcr: true

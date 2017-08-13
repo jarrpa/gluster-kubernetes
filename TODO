@@ -1,0 +1,14 @@
+gk-deploy:
+- config file
+- ssh sudo flag
+- allow specifying container images
+- use secret for heketi db
+- hack on StatefulSets (cassandra)
+- check out Rook
+
+gluster container:
+- cri-o?
+- HOW DOES GEO-REP WORK??
+
+vagrant:
+- investigate bootkube

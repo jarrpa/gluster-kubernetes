@@ -10,3 +10,5 @@ for m in ${MACHINES[*]}; do
     echo -e "\r[${m}] ${line}"
   done <<< "$(vagrant ssh "${m}" -c "sudo systemctl restart docker kubelet ntpd" -- -qn 2>&1 && echo "OK")" &
 done
+wait
+paplay glass.ogg

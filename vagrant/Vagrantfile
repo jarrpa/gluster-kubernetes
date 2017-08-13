@@ -31,7 +31,8 @@ Vagrant.configure("2") do |config|
             vb.cpus = 2
         end
         master.vm.provider :libvirt do |lv|
-            lv.memory = 1024
+            lv.storage_pool_name = "MINE"
+            lv.memory = 2048
             lv.cpus = 2
             lv.volume_cache = LIBVIRT_DISK_CACHE
         end
@@ -42,6 +43,7 @@ Vagrant.configure("2") do |config|
             ansible.verbose = true
             ansible.limit = "all"
             ansible.playbook = "site.yml"
+            #ansible.verbose = "vvv"
             ansible.groups = {
                 "master" => ["master"],
                 "nodes" => (0..NODES-1).map {|j| "node#{j}"},
@@ -78,6 +80,7 @@ Vagrant.configure("2") do |config|
                     vb.cpus = 2
                 end
                 node.vm.provider :libvirt do  |lv|
+                    lv.storage_pool_name = "MINE"
                     driverletters = ('b'..'z').to_a
                     lv.storage :file, :device => "vd#{driverletters[d]}", :path => "atomic-disk-#{i}-#{d}.disk", :size => '1024G'
                     lv.memory = 1024
