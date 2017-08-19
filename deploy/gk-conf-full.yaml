@@ -1,0 +1,103 @@
+---
+# This is an example of a full gk-conf file. The following configuration is
+# valid for an environment that has a set of GlusterFS nodes that rest outside
+# of Kubernetes which will be managed by a Kubernetes-native (containerized)
+# heketi pod.
+#
+# Most of these parameters have counterparts as CLI arguments to gk-deploy.
+# Please see the output of "gk-deploy --help" for more information.
+# 'glusterfs.clusters' and 'nodes' do not have CLI counterparts.
+#
+# The following is a listing of all parameters, including usage notes where
+# needed.
+#
+# cli:            string
+# templates:      string
+# namespace:      string
+# wait:           int
+# verbose:        bool
+# skip_prompt:    bool
+# log:            string
+# admin_key:      string
+# user_key:       string
+# nodes:          sequence of mappings, overrides glusterfs.clusters if exists
+#   manage_addr:    string, see glusterfs.clusters.nodes below
+#   storage_addr:   string, see glusterfs.clusters.nodes below
+#   zone:           string, see glusterfs.clusters.nodes below
+#   devices:        sequence of strings, see glusterfs.clusters.nodes below
+# glusterfs:      mapping
+#   deploy:         bool
+#   deploy_block:   bool
+#   deploy_object:  bool
+#   object:         mapping
+#     account:        string
+#     user:           string
+#     passworf:       string
+#     storageclass:   string
+#     capacity:       string
+#   clusters:       sequence of mappings
+#     nodes:          sequence of mappings
+#       manage_addr:    string, hostname or IP address of the node hosting
+#                       GlusterFS pod; used for management via REST API
+#       storage_addr:   string, IP address of the node hosting the GlusterFS
+#                       pod; used for backend storage communications between
+#                       nodes; recommended to be on a different network from
+#                       the management address
+#       zone:           string, used for distribution of storage; each volume
+#                       will try to distribute evenly across nodes in different
+#                       zones
+#       devices:        sequence of strings, each string being a storage device
+#                       for use exclusively by GlusterFS
+# ssh_exec:       mapping
+#   keyfile:        string
+#   user:           string
+#   port:           int
+#   sudo:           bool
+
+cli:         "/usr/bin/kubectl"
+templates:   "./kube-templates"
+namespace:   "default"
+wait:        300
+verbose:     true
+skip_prompt: true
+log:         "./gk-deploy.log"
+admin_key:   "secretstring"
+user_key:    "alsosecretstring"
+glusterfs:
+  deploy:        false
+  deploy_block:  true
+  deploy_object: true
+  object:
+    account:      "account"
+    user:         "user"
+    password:     "password"
+    storageclass: "glusterfs-for-s3"
+    capacity:     "2Gi"
+  clusters:
+  - nodes:
+    - manage_addr:  "node0"
+      storage_addr: "192.168.10.100"
+      zone:         "1"
+      devices:
+      - "/dev/vdb"
+      - "/dev/vdc"
+      - "/dev/vdd"
+    - manage_addr:  "node1"
+      storage_addr: "192.168.10.101"
+      zone:         "1"
+      devices:
+      - "/dev/vdb"
+      - "/dev/vdc"
+      - "/dev/vdd"
+    - manage_addr:  "node2"
+      storage_addr: "192.168.10.102"
+      zone:         "1"
+      devices:
+      - "/dev/vdb"
+      - "/dev/vdc"
+      - "/dev/vdd"
+ssh_exec:
+  keyfile: "./id_rsa"
+  user:    "root"
+  port:    22
+  sudo:    false

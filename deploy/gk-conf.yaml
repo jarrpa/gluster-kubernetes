@@ -1,0 +1,26 @@
+---
+# This is an example of a minimal gk-conf file. Note that a top-level 'nodes'
+# attribute overrides all nodes specified in 'glusterfs.clusters', and is
+# merely a shortcut for users that only need one GlusterFS cluster. This
+# configuration is valid for the vagrant environment provided in the
+# gluster-kubernetes repo.
+
+nodes:
+- manage_addr: node0
+  storage_addr: 192.168.10.100
+  devices:
+  - /dev/vdb
+  - /dev/vdc
+  - /dev/vdd
+- manage_addr: node1
+  storage_addr: 192.168.10.101
+  devices:
+  - /dev/vdb
+  - /dev/vdc
+  - /dev/vdd
+- manage_addr: node2
+  storage_addr: 192.168.10.102
+  devices:
+  - /dev/vdb
+  - /dev/vdc
+  - /dev/vdd
