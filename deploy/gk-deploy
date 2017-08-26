@@ -42,7 +42,7 @@ SSH_SUDO="false"
 SSH_PORT="22"
 ADMIN_KEY=""
 USER_KEY=""
-DAEMONSET_LABEL=""
+DAEMONSET_LABEL="glusterfs"
 SINGLE_NODE=0
 DEPLOY_OBJECT=1
 OBJ_ACCOUNT=""
@@ -127,7 +127,7 @@ Options:
   --daemonset-label DAEMONSET_LABEL
               Controls the value of the label set on nodes which will host pods
               from the GlusterFS daemonset. This allows for multiple GlusterFS
-              daemonsets to run in the same cluster. Default is 'glusterfs'.
+              daemonsets to run in the same cluster. Default is '${DAEMONSET_LABEL}'.
 
   --single-node
               Deploy as few pods as needed, no redundancy for the heketi
@@ -802,9 +802,6 @@ if [[ ${EXISTS_HEKETI} -eq 0 ]]; then
 fi
 
 if [[ ${GLUSTER} -eq 1 ]] && [[ "${EXECUTOR}" == "kubernetes" ]] && [[ ${EXISTS_GLUSTERFS} -eq 0 ]] && [[ ${EXISTS_HEKETI} -eq 0 ]]; then
-  if [[ -z ${DAEMONSET_LABEL} ]]; then
-    DAEMONSET_LABEL=glusterfs
-  fi
   while read -r node; do
     debug "Marking '${node}' as a GlusterFS node."
     eval_output "${CLI} label nodes ${node} storagenode=${DAEMONSET_LABEL} --overwrite 2>&1"
