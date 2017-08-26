@@ -32,6 +32,16 @@
     name: gluster/gluster-centos
     tag: latest
 
+- name: Pull glusterblock provisioner image
+  docker_image:
+    name: gluster/glusterblock-provisioner
+    tag: latest
+
+- name: Pull gluster-s3 image
+  docker_image:
+    name: gluster/gluster-object
+    tag: latest
+
 - name: Pull heketi Docker image
   docker_image:
     name: heketi/heketi
