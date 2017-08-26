@@ -98,13 +98,37 @@ destroy_vagrant() {
 rollback_vagrant() {
 	cd "${VAGRANT_DIR}" || exit 1
 	(
-        ./rollback.sh
+	./rollback.sh
 	if [[ ${?} -ne 0 ]]; then
 		destroy_vagrant
 		create_vagrant
-		ssh_config
 	fi
-        ) || end_test -e "Error rolling back vagrant environment"
+	) || end_test -e "Error rolling back vagrant environment"
+	(
+	s=0
+	refused=1
+	echo -en "\r[master] Waiting for Kubernetes service ..."
+	while [[ ${refused} -eq 1 ]] && [[ ${s} -lt 30 ]]; do
+		out=$(ssh -qn -F "${SSH_CONFIG}" master "kubectl get namespaces" 2>&1)
+		echo "${out}" | grep -qv "was refused"
+		if [[ ${?} -eq 0 ]]; then
+			refused=0
+		else
+			echo -n "."
+			sleep 1
+			((s++))
+		fi
+		ssh -qn -F "${SSH_CONFIG}" master "kubectl get namespaces" 2>&1 | grep -qv "was refused" && refused=0 || sleep 1
+		((s++))
+	done
+	if [[ ${refused} -eq 0 ]]; then
+		echo " OK"
+	else
+		echo " FAIL"
+		echo "${out}"
+	fi
+	exit ${refused}
+	) || end_test -e "Timeout waiting for Kubernetes service"
 }
 
 copy_deploy() {
