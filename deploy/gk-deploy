@@ -607,7 +607,7 @@ Do you wish to proceed with deployment?
 fi
 
 if [[ ! -f ${TOPOLOGY} ]]; then
-  echo "Topology File not found!"
+  echo "Topology file '${TOPOLOGY}' not found!"
   exit 1
 else
   NODES=$(python - <<END
