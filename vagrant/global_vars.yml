@@ -19,6 +19,7 @@ install_pkgs:
 - kubectl{{ kubernetes_version_tag }}
 - ntp
 - iscsi-initiator-utils
+- docker-python
 # The following variables control the use and configuration of a custom docker
 # registry and/or custom rpm repositories:
 # * custom_registry: Specifies and enables a custom registry (default none)
