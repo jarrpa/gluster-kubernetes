@@ -7,3 +7,6 @@ vagrant up --no-provision "${@}" \
 if [[ "x$(vagrant plugin list | grep sahara)" != "x" ]]; then
   vagrant sandbox on
 fi
+
+# shellcheck disable=SC2094
+vagrant ssh-config > ssh-config

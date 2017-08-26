@@ -78,8 +78,6 @@ create_vagrant() {
 	if [[ ${run} -eq 1 ]]; then
 		./up.sh || end_test -e "Error bringing up vagrant environment"
 	fi
-
-        ssh_config
 }
 
 start_vagrant() {
@@ -95,11 +93,6 @@ stop_vagrant() {
 destroy_vagrant() {
 	cd "${VAGRANT_DIR}" || exit 1
 	vagrant destroy || end_test -e "Error destroying vagrant environment"
-}
-
-ssh_config() {
-	cd "${VAGRANT_DIR}" || exit 1
-	vagrant ssh-config > "${SSH_CONFIG}" || end_test -e "Error creating ssh-config"
 }
 
 rollback_vagrant() {
