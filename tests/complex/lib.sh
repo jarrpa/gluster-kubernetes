@@ -216,7 +216,7 @@ end_run() {
 	end_test
 	if [[ ${RUN_DEPTH} -eq 0 ]]; then
 		echo -e "|=====\n| \e[1mTEST SUMMARY:\e[21m"
-		echo -e "$(cat "${TEST_LOG}")"
+		echo -e "$(cat "${TEST_LOG}" 2>/dev/null)"
 		rm -f "${TEST_LOG}"
 	fi
 	exit ${LOCAL_FAILURE}
