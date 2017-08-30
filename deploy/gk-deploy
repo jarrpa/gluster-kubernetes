@@ -656,6 +656,12 @@ else
   exit 1
 fi
 
+out=$(${CLI} get namespaces)
+if [[ ${?} -ne 0 ]]; then
+  echo "${out}"
+  exit 1
+fi
+
 if [[ "${CLI}" == *oc ]]; then
   oc_version=$(${CLI} version | grep 'oc v' | awk '{ print $2 }' | tr -d 'v')
   ver_maj=$(echo "$oc_version" | cut -d '.' -f1)
