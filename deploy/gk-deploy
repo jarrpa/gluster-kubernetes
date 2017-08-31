@@ -731,7 +731,7 @@ fi
 
 output "Checking for pre-existing resources..."
 
-if [[ ${GLUSTERFS} -eq 1 ]] && [[ "${EXECUTOR}" == "kubernetes" ]]; then
+if [[ ${GLUSTER} -eq 1 ]] && [[ "${EXECUTOR}" == "kubernetes" ]]; then
   output -n "  GlusterFS pods ... "
   check pods "glusterfs=pod" 2 2>&1
   if [[ $? -eq 0 ]]; then
