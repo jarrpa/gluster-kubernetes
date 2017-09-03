@@ -57,7 +57,7 @@ BLOCK_HOST_SIZE=0
 usage() {
   echo -e "USAGE: ${PROG} [-ghvy] [-c CLI] [-t <TEMPLATES>] [-n NAMESPACE] [-w <SECONDS>]
        [-s <KEYFILE>] [--ssh-user <USER>] [--ssh-port <PORT>]
-       [--admin-key <ADMIN_KEY>] [--user-key <USER_KEY>] [-l <LOG_FILE>]
+       [--admin-key <ADMIN_KEY>] [--user-key <USER_KEY>]
        [--daemonset-label <DAEMONSET_LABEL> ] [--single-node]
        [--no-object] [--object-account <ACCOUNT>] [--object-user <USER>]
        [--no-object] [--object-account <ACCOUNT>] [--object-user <USER>]
