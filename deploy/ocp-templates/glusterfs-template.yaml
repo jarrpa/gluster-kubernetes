@@ -19,9 +19,6 @@ objects:
       description: GlusterFS DaemonSet
       tags: glusterfs
   spec:
-    selector:
-      matchLabels:
-        glusterfs-node: pod
     template:
       metadata:
         name: glusterfs
