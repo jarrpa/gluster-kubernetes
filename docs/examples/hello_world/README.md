@@ -66,9 +66,8 @@ metadata:
   name: gluster-heketi  <1>
 provisioner: kubernetes.io/glusterfs  <2>
 parameters:
-  endpoint: "heketi-storage-endpoints"  <3>
-  resturl: "http://10.42.0.0:8080"  <4>
-  restuser: "joe"  <5>
+  resturl: "http://10.42.0.0:8080"  <3>
+  restuser: "joe"  <4>
   restuserkey: "My Secret Life"  <6>
 ```
 
@@ -88,13 +87,17 @@ parameters:
 
 <2> Provisioner
 
-<3> GlusterFS defined EndPoint taken from Step 1 above (kubectl get endpoints). For Kubernetes >= 1.6, this parameter should be removed as Kubernetes will reject this YAML definition.
+<3> Heketi REST Url, taken from Step 1 above (echo $HEKETI_CLI_SERVER), may also be set to the Kubernetes service DNS name for the Heketi service.
 
-<4> Heketi REST Url, taken from Step 1 above (echo $HEKETI_CLI_SERVER), may also be set to the Kubernetes service DNS name for the Heketi service.
+<4> Restuser, can be anything since authorization is turned off
 
-<5> Restuser, can be anything since authorization is turned off
+<5> Restuserkey, like Restuser, can be anything
 
-<6> Restuserkey, like Restuser, can be anything
+**NOTE:** If you're using Kubernetes < 1.6, you also need to add the following parameter:
+
+```
+  endpoint: "heketi-storage-endpoints"
+```
 
 Create the Storage Class YAML file.  Save it.  Then submit it to Kubernetes
 
