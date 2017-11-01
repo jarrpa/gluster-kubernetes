@@ -5,6 +5,7 @@ H_IMAGE=${HEKETI_IMAGE:-heketi/heketi:dev}
 
 scp -qrF ssh-config ../deploy master:
 scp -qrF ssh-config ../hello_world master:
+scp -qrF ssh-config /home/jrivera/projects/golang/src/github.com/gluster/gluster-csi-driver/pkg/glusterfs/deploy/kubernetes master:
 
 echo "[master] Updating GlusterFS manifest..."
 vagrant ssh master -c "sudo sed -i 's#gluster/gluster-centos:latest#${G_IMAGE}#' deploy/kube-templates/glusterfs-daemonset.yaml" -- -qn 1>/dev/null 2>&1 || echo "FAIL" && echo "OK"

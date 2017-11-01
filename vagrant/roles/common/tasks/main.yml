@@ -211,6 +211,15 @@
   when: custom_registry is defined
 
 - name: enable kube services
+  service: name=docker enabled=yes daemon_reload=yes
+
+- name: patch docker service file
+  lineinfile:
+    path: /etc/systemd/system/multi-user.target.wants/docker.service
+    regexp: '^MountFlags='
+    line: 'MountFlags='
+
+- name: enable kube services
   service: name={{ item }} state=restarted enabled=yes daemon_reload=yes
   with_items:
     - docker
