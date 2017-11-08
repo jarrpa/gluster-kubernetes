@@ -127,6 +127,9 @@
 - name: firewall trust weave net CIDR
   firewalld: source=10.32.0.0/12 zone=trusted permanent=true state=enabled immediate=true
 
+- name: firewall trust port 10255
+  firewalld: port=10255/tcp zone=trusted permanent=true state=enabled immediate=true
+
 - name: firewall trust port 10250
   firewalld: port=10250/tcp zone=trusted permanent=true state=enabled immediate=true
 
