@@ -20,6 +20,33 @@
   become_method: sudo
   vars_files:
     - "global_vars.yml"
+  tasks:
+    - include_role:
+        name: master
+        tasks_from: gcr_proxy.yml
+      run_once: true
+      when:
+      - custom_registry is defined
+      - custom_registry_gcr | default(false)
+
+- hosts: master
+  become: yes
+  become_method: sudo
+  vars_files:
+    - "global_vars.yml"
+  tasks:
+    - include_role:
+        name: common
+        tasks_from: gcr_proxy.yml
+      when:
+      - custom_registry is defined
+      - custom_registry_gcr | default(false)
+
+- hosts: master
+  become: yes
+  become_method: sudo
+  vars_files:
+    - "global_vars.yml"
   roles:
     - master
 

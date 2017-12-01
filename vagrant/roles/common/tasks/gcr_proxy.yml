@@ -1,0 +1,19 @@
+---
+- name: update /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    state: "{{ gcr_proxy_state | default('present') }}"
+    line: "{{ vagrant_master }} gcr.io"
+
+- name: update docker config
+  lineinfile:
+    path: /etc/sysconfig/docker
+    state: "{{ gcr_proxy_state | default('present') }}"
+    regexp: "INSECURE_REGISTRY='([^']*)'"
+    line: "INSECURE_REGISTRY='\\1 --insecure-registry gcr.io'"
+    backrefs: yes
+
+- name: restart docker
+  service:
+    name: docker
+    state: restarted

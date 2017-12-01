@@ -51,7 +51,7 @@ install_pkgs:
 #custom_registry_add: false
 #custom_registry_gcr: true
 #gcr_proxy_state: absent
-#gcr_proxy_nginx: 0.23
+#gcr_proxy_nginx: 0.24
 #custom_yum_repos:
 #  kubernetes_el7: http://mypkgs/path/to/repo1
 #  epel_el7: http://mypkgs/path/to/repo2
