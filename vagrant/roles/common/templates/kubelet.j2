@@ -1,0 +1,5 @@
+{% set extra_args = '--feature-gates=BlockVolume=true' %}
+{% if container_runtime == 'cri-o' %}
+{% set extra_args = extra_args + ' --container-runtime=remote --container-runtime-endpoint=unix:///var/run/crio/crio.sock' %}
+{% endif %}
+KUBELET_EXTRA_ARGS={{ extra_args }}

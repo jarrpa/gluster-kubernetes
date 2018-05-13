@@ -54,6 +54,23 @@
       group: vagrant
   when: not kubelet.stat.exists
 
+- lineinfile:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '^    - --feature-gates'
+    insertbefore: '^    image: '
+    line: '    - --feature-gates=BlockVolume=true'
+
+- lineinfile:
+    path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    regexp: '^    - --feature-gates'
+    insertbefore: '^    image: '
+    line: '    - --feature-gates=BlockVolume=true'
+
+- name: restart kubelet
+  systemd:
+    state: restarted
+    service: kubelet
+
 - name: wait for k8s to be ready
   wait_for:
     host: localhost

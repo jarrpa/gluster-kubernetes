@@ -206,6 +206,10 @@
       {% endif %}
       ]
 
+# 1.11+: Use /etc/sysconfig/kubelet
+- name: install kubelet config file
+  template: src=kubelet.j2 dest=/etc/sysconfig/kubelet owner=root group=root mode=644 backup=yes
+
 - name: copy docker conf
   template: src=docker.j2 dest=/etc/sysconfig/docker force=yes mode=0644
   when: custom_registry is defined
