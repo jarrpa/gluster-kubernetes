@@ -1,0 +1,26 @@
+- name: get default DNS
+  shell: grep nameserver /etc/resolv.conf | awk '{print $2}'
+  register: cat_resolv
+
+- name: Get kube-dns address
+  command: "kubectl get svc -n kube-system kube-dns -o go-template='{{ '{{' }}.spec.clusterIP{{ '}}' }}'"
+  register: kube_dns
+  delegate_to: master
+
+- name: copy dnsmasq.conf
+  template: src=kube-dns.conf.j2 dest=/etc/dnsmasq.d/ force=no mode=0644
+
+- name: restart dnsmasq
+  service: name=dnsmasq enabled=yes state=restarted
+
+- name: Open DNS port
+  firewalld: port=53/tcp zone=trusted permanent=true state=enabled immediate=true
+
+- name: setup eth0 DNS
+  lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-eth0 line={{item}}
+  with_items:
+    - "PEERDNS=no"
+    - "DNS1=127.0.0.1"
+
+- name: restart NetworkManager
+  service: name=NetworkManager enabled=yes state=restarted

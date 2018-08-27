@@ -1,0 +1,6 @@
+dhcp-option=15,"svc.cluster.local cluster.local"
+server=/svc.cluster.local/{{kube_dns.stdout}}
+server=/cluster.local/{{kube_dns.stdout}}
+{% for server in cat_resolv.stdout_lines %}
+server={{server}}
+{% endfor %}
