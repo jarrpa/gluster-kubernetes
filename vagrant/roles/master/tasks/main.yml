@@ -73,6 +73,13 @@
 - name: create weave network
   command: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version={{ kubectl_version.stdout | b64encode }}"
 
+# Version compatibility problems between docker and SELinux:
+#   https://github.com/kubernetes/kubeadm/issues/998
+#   https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/#coredns-pods-have-crashloopbackoff-or-error-state
+- name: modify coredns
+  shell: "kubectl -n kube-system get deployment coredns -o yaml | sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | kubectl apply -f -"
+  when: kube_ver.stdout is version_compare('1.10', '>=')
+
 # jsonpath tested with kubeadm 1.6, 1.7, 1.8 
 - name: get dns service address
   command: kubectl get services --all-namespaces -ojsonpath='{.items[?(@.metadata.name=="kube-dns")].spec.clusterIP}'
