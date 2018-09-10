@@ -3,6 +3,7 @@
 kubernetes_version: latest
 kubernetes_token: abcdef.1234567890abcdef
 kubernetes_version_tag: "{% if kubernetes_version != 'latest' %}-{{ kubernetes_version }}{% endif %}"
+kubeadm_uninstall: true
 install_pkgs:
 - wget
 - screen

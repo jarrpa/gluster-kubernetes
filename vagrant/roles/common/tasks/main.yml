@@ -88,6 +88,17 @@
 - name: Ensure net.bridge.bridge-nf-call-iptables is set. See kubeadm
   copy: src=k8s.conf owner=root group=root dest=/etc/sysctl.d/k8s.conf
 
+- block:
+  - name: Delete kubeadm state
+    shell: "kubeadm reset --force --ignore-preflight-errors all"
+
+  - name: Delete docker containers
+    shell: "for id in `docker ps -q`; do docker rm -f $id; done"
+
+  - name: Delete runc containers
+    shell: "for id in `runc list -q`; do runc delete -f $id; done"
+  when: kubeadm_uninstall
+
 - name: determine installed kubeadm version
   command: rpm -q --qf '%{version}' kubeadm
   register: kube_ver
