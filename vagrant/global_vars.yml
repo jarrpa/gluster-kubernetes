@@ -4,6 +4,7 @@ kubernetes_version: latest
 kubernetes_token: abcdef.1234567890abcdef
 kubernetes_version_tag: "{% if kubernetes_version != 'latest' %}-{{ kubernetes_version }}{% endif %}"
 kubeadm_uninstall: true
+container_runtime: cri-o
 install_pkgs:
 - wget
 - screen
@@ -24,6 +25,8 @@ install_pkgs:
 - iscsi-initiator-utils
 - docker-python
 - dnsmasq
+- conntrack
+- cri-o
 # The following variables control the use and configuration of a custom docker
 # registry and/or custom rpm repositories:
 # * custom_registry: Specifies and enables a custom registry (default none)

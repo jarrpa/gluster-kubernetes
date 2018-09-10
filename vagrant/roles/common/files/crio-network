@@ -1,0 +1,1 @@
+CRIO_NETWORK_OPTIONS="--cni-plugin-dir /opt/cni/bin"

@@ -59,6 +59,22 @@
       description: Kubernetes
       baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
       enabled: yes
+
+  - name: setup virt-container repo
+    yum_repository:
+      name: virt-container-common
+      description: Virt Container Common
+      baseurl: https://cbs.centos.org/repos/virt7-container-common-candidate/x86_64/os/
+      enabled: yes
+      gpgcheck: no
+
+  - name: setup cri-o repo
+    yum_repository:
+      name: cri-o
+      description: cri-o
+      baseurl: file:///vagrant/cri-o
+      enabled: yes
+      gpgcheck: no
   when: custom_repos is not defined
 
 - block:
@@ -164,6 +180,32 @@
 - name: install fixed kubelet-kubeadm config file
   template: src=10-kubeadm.conf.j2 dest=/etc/systemd/system/kubelet.service.d/ owner=root group=root mode=644 backup=yes
 
+- name: install crio-network config file
+  copy: src=crio-network dest=/etc/sysconfig/ owner=root group=root mode=644 backup=yes
+
+- name: Remove managed CRI-O configuration
+  blockinfile:
+    path: "/etc/crio/crio.conf"
+    state: "absent"
+
+- name: Configure CRI-O
+  blockinfile:
+    path: "/etc/crio/crio.conf"
+    insertafter: '^\[crio\.image\]$'
+    block: |
+      registries = [
+      {% if custom_registry_add | default(true) %}
+        "{{ custom_registry }}",
+      {% endif %}
+        "docker.io",
+        "quay.io",
+      ]
+      insecure_registries = [
+      {% if custom_registry_add | default(true) and custom_registry_insecure | default(true) %}
+        "{{ custom_registry }}",
+      {% endif %}
+      ]
+
 - name: copy docker conf
   template: src=docker.j2 dest=/etc/sysconfig/docker force=yes mode=0644
   when: custom_registry is defined
@@ -174,3 +216,4 @@
     - docker
     - kubelet
     - ntpd
+    - crio
