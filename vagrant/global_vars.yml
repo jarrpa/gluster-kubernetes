@@ -8,6 +8,8 @@ install_pkgs:
 - screen
 - git
 - vim
+- net-tools
+- bind-utils
 - glusterfs-client
 - heketi-client
 - iptables
