@@ -31,6 +31,9 @@ items:
     - apiGroups: [""]
       resources: ["routes"]
       verbs: ["get", "list"]
+    - apiGroups: [""]
+      resources: ["endpoints"]
+      verbs: ["get", "list", "watch", "create", "update", "patch"]
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
